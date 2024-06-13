@@ -2,6 +2,11 @@ body {
   * {
     @apply text-neutral-700 font-default;
   }
+  &.dark-mode {
+    *:not(.exclude-theme) {
+      @apply text-neutral-50 font-default;
+    }
+  }
 }
 
 h1 {
@@ -31,3 +36,4 @@ h6 {
 p, span {
   @apply font-normal text-base;
 }
+
