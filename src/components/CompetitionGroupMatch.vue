@@ -45,8 +45,9 @@ defineProps({
 });
 </script>
 
-<style scoped>
+<style scoped lang="scss">
 input {
   @apply bg-neutral-100 w-10 md:w-12 p-1 font-bold text-center text-xl md:text-3xl rounded-xl;
+  @apply text-neutral-700 #{!important};
 }
 </style>

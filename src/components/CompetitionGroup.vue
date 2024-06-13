@@ -77,6 +77,7 @@ table {
     tr {
       th {
         @apply text-center w-12 font-bold;
+        @apply text-neutral-700 #{!important};
       }
     }
   }
