@@ -1,0 +1,33 @@
+body {
+  * {
+    @apply text-neutral-700 font-default;
+  }
+}
+
+h1 {
+  @apply font-bold text-5xl;
+}
+
+h2 {
+  @apply font-bold text-4xl;
+}
+
+h3 {
+  @apply font-bold text-3xl;
+}
+
+h4 {
+  @apply font-bold text-2xl;
+}
+
+h5 {
+  @apply font-medium text-xl;
+}
+
+h6 {
+  @apply font-medium text-lg;
+}
+
+p, span {
+  @apply font-normal text-base;
+}
