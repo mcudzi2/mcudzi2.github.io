@@ -1,7 +1,7 @@
 <template>
   <div class="w-full">
     <div class="w-1/3 bg-neutral-600 py-1 pl-6 rounded-t-md">
-      <h5 class="text-white">Group {{group}}</h5>
+      <h5 class="text-white" v-text="groupName" />
     </div>
     <table class="w-full rounded-b-md rounded-tr-md overflow-hidden">
       <thead class="bg-neutral-200 font-medium">
@@ -43,15 +43,32 @@ const props = defineProps({
   group: {
     type: String,
     required: true,
-    validator: (value) => ['A', 'B', 'C', 'D', 'E', 'F'].includes(value),
+    validator: (value) => ['A', 'B', 'C', 'D', 'E', 'F', 'thirds'].includes(value),
   },
 });
 
-const teams = computed(() => teamsStore.teamsByGroup[props.group].concat().sort((teamA, teamB) => {
-  return (((3 * teamB.wins) + teamB.draws) - ((3 * teamA.wins) + teamA.draws))
-    || ((teamB.goalsFor - teamB.goalsAgainst) - (teamA.goalsFor - teamA.goalsAgainst))
-    || (teamB.goalsFor - teamA.goalsFor);
-}));
+const groupName = computed(() => props.group === 'thirds' ? 'Best of 3rd Place' : `Group ${props.group}`);
+
+const teams = computed(() => {
+  if (props.group === 'thirds') {
+    return Object.values(teamsStore.teamsByGroup).map(group => {
+      return group.concat().sort((teamA, teamB) => {
+        return (((3 * teamB.wins) + teamB.draws) - ((3 * teamA.wins) + teamA.draws))
+          || ((teamB.goalsFor - teamB.goalsAgainst) - (teamA.goalsFor - teamA.goalsAgainst))
+          || (teamB.goalsFor - teamA.goalsFor)
+          || (teamB.wins - teamA.wins);
+      })[2];
+    }).sort((teamA, teamB) => {
+      return 0;
+    });
+  }
+
+  return teamsStore.teamsByGroup[props.group].concat().sort((teamA, teamB) => {
+    return (((3 * teamB.wins) + teamB.draws) - ((3 * teamA.wins) + teamA.draws))
+      || ((teamB.goalsFor - teamB.goalsAgainst) - (teamA.goalsFor - teamA.goalsAgainst))
+      || (teamB.goalsFor - teamA.goalsFor);
+  });
+});
 </script>
 
 <style scoped lang="scss">

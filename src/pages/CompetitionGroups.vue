@@ -16,6 +16,9 @@
         :group="group"
       />
     </div>
+    <div class="mx-auto px-0 w-full lg:w-1/2 lg:px-6 3xl:w-1/3">
+      <CompetitionGroup group="thirds" />
+    </div>
     <hr/>
     <h3 class="text-center">
       Matches
