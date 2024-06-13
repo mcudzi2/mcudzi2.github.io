@@ -25,7 +25,7 @@
 <script setup>
 import {computed, ref} from "vue";
 
-const darkMode = ref(true);
+const darkMode = ref(false);
 const buttonText = computed(() => darkMode.value ? 'Light Mode' : 'Dark Mode');
 const buttonClass = computed(() => darkMode.value ? 'bg-white !text-neutral-700 font-light' : 'bg-neutral-700 !text-neutral-50 font-medium');
 function toggleDarkMode() {

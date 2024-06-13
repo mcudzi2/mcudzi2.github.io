@@ -27,6 +27,6 @@ defineProps({
 
 <style scoped>
 div > h4 {
-  @apply text-xl;
+  @apply text-lg;
 }
 </style>

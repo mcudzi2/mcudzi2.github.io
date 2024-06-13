@@ -3,7 +3,7 @@ body {
     @apply text-neutral-700 font-default;
   }
   &.dark-mode {
-    *:not(.exclude-theme) {
+    * {
       @apply text-neutral-50 font-default;
     }
   }

@@ -23,7 +23,8 @@
     <h3 class="text-center">
       Matches
     </h3>
-    <div class="space-y-3 my-0 mx-auto w-full md:w-[45rem] lg:w-[50rem]">
+    <p class="italics text-center">Enter scores for the matches below. Your group standings will be calculated above as you enter scores.</p>
+    <div class="my-0 mx-auto w-full grid grid-cols-1 xl:grid-cols-2 gap-x-12 gap-y-4">
       <CompetitionGroupMatch
         v-for="(match, idx) in teamsStore.matches"
         :key="match.team1.abbr + match.team2.abbr"
