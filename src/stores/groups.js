@@ -1,7 +1,8 @@
 import { defineStore } from "pinia";
 import { uniq, groupBy } from 'lodash';
+import {useCompetitions} from "@/stores/competitions.js";
 
-export const useTeams = defineStore('teams', {
+export const useGroups = defineStore('groups', {
   state: () => ({
     teams: [],
     countries: {
@@ -31,7 +32,24 @@ export const useTeams = defineStore('teams', {
         {abbr: "PRT", name: "Portugal", group: 'F'},
         {abbr: "CZE", name: "Czech Republic", group: 'F'},
       ],
-      'copa-america': [],
+      'copa-america': [
+        {abbr: "ARG", name: "Argentina", group: 'A'},
+        {abbr: "PER", name: "Peru", group: 'A'},
+        {abbr: "CHL", name: "Chile", group: 'A'},
+        {abbr: "CAN", name: "Canada", group: 'A'},
+        {abbr: "MEX", name: "Mexico", group: 'B'},
+        {abbr: "ECU", name: "Ecuador", group: 'B'},
+        {abbr: "VEN", name: "Venezuela", group: 'B'},
+        {abbr: "JAM", name: "Jamaica", group: 'B'},
+        {abbr: "USA", name: "United States", group: 'C'},
+        {abbr: "URY", name: "Uruguay", group: 'C'},
+        {abbr: "PAN", name: "Panama", group: 'C'},
+        {abbr: "BOL", name: "Bolivia", group: 'C'},
+        {abbr: "BRA", name: "Brazil", group: 'D'},
+        {abbr: "COL", name: "Colombia", group: 'D'},
+        {abbr: "PRY", name: "Paraguay", group: 'D'},
+        {abbr: "CRI", name: "Costa Rica", group: 'D'},
+      ],
     },
     matches: [],
   }),
@@ -39,6 +57,25 @@ export const useTeams = defineStore('teams', {
   getters: {
     groups: (state) => uniq(state.teams.map(team => team.group)),
     teamsByGroup: (state) => groupBy(state.teams, 'group'),
+    sortedTeamsByGroup: (state) => {
+      const sortedTeams = {};
+      state.groups.forEach(group => {
+        sortedTeams[group] = state.teamsByGroup[group].concat().sort((teamA, teamB) => {
+          return (state.calculatePoints(teamB) - state.calculatePoints(teamA))
+              || (state.calculateGoalDiff(teamB) - state.calculateGoalDiff(teamA))
+              || (teamB.goalsFor - teamA.goalsFor);
+        });
+      });
+      return sortedTeams;
+    },
+    thirdPlaceGroup: (state) => Object.values(state.sortedTeamsByGroup)
+        .map(group => group[2])
+        .sort((teamA, teamB) => {
+          return (state.calculatePoints(teamB) - state.calculatePoints(teamA))
+              || (state.calculateGoalDiff(teamB) - state.calculateGoalDiff(teamA))
+              || (teamB.goalsFor - teamA.goalsFor)
+              || (teamB.wins - teamA.wins);
+        }),
   },
 
   actions: {
@@ -57,13 +94,20 @@ export const useTeams = defineStore('teams', {
         goalsAgainst: 0,
       }));
     },
-    initMatches() {
+    initMatches(forceNew = false) {
       if (!this.teams) {
         console.error("INITIALIZE TEAMS FIRST!");
         return;
       }
 
       this.matches = [];
+      const competitionsStore = useCompetitions();
+      const savedMatches = localStorage.getItem(competitionsStore.currentCompetition.link + '-group-matches');
+      if (savedMatches && !forceNew) {
+        this.matches = JSON.parse(savedMatches);
+        return;
+      }
+
       this.groups.forEach(group => {
         const teamsInGroup = this.teamsByGroup[group];
         for (let i = 0; i < teamsInGroup.length; i++) {
@@ -117,5 +161,18 @@ export const useTeams = defineStore('teams', {
     calculateGoalDiff(team) {
       return team.goalsFor - team.goalsAgainst;
     },
+    save() {
+      if (!this.matches?.length) {
+        return false;
+      }
+
+      const competitionsStore = useCompetitions();
+      localStorage.setItem(competitionsStore.currentCompetition.link + '-group-matches', JSON.stringify(this.matches));
+      return true;
+    },
+    clear() {
+      this.initMatches(true);
+      this.updateMatchStats();
+    }
   }
 })

@@ -3,14 +3,14 @@
 </template>
 
 <script setup>
-import { useTeams } from "@/stores/teams.js";
+import { useGroups } from "@/stores/groups.js";
 import { useRoute } from "vue-router";
 
-const teamsStore = useTeams();
+const groupsStore = useGroups();
 const route = useRoute();
-teamsStore.initTeams(route.params.competition);
-teamsStore.initMatches();
-teamsStore.updateMatchStats();
+groupsStore.initTeams(route.params.competition);
+groupsStore.initMatches();
+groupsStore.updateMatchStats();
 </script>
 
 <style scoped>

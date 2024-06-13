@@ -3,7 +3,7 @@
     class="w-full rounded-xl py-1 px-3 flex flex-row items-center gap-x-4"
     :class="backgroundColorClasses"
   >
-    <CompetitionGroupMatchTeam
+    <CompetitionMatchTeam
       :team="match.team1"
       class="flex-1"
     />
@@ -11,15 +11,15 @@
       v-model="match.team1Score"
       type="number"
       min="0"
-      @input="teamsStore.updateMatchStats()"
+      @input="groupsStore.updateMatchStats()"
     />
     <input
       v-model="match.team2Score"
       type="number"
       min="0"
-      @input="teamsStore.updateMatchStats()"
+      @input="groupsStore.updateMatchStats()"
     />
-    <CompetitionGroupMatchTeam
+    <CompetitionMatchTeam
       :team="match.team2"
       flipped
       class="flex-1"
@@ -28,11 +28,11 @@
 </template>
 
 <script setup>
-import CompetitionGroupMatchTeam from "@/components/CompetitionGroupMatchTeam.vue";
-import {useTeams} from "@/stores/teams.js";
+import CompetitionMatchTeam from "@/components/CompetitionMatchTeam.vue";
+import {useGroups} from "@/stores/groups.js";
 import {computed} from "vue";
 
-const teamsStore = useTeams();
+const groupsStore = useGroups();
 const props = defineProps({
   match: {
     type: Object,

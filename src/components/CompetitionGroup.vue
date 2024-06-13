@@ -25,6 +25,7 @@
           <CompetitionGroupTeam
             :position="idx + 1"
             :team="team"
+            :is-thirds-group="isThirdsGroup"
           />
         </template>
       </tbody>
@@ -33,11 +34,13 @@
 </template>
 
 <script setup>
-import {useTeams} from "@/stores/teams.js";
+import {useGroups} from "@/stores/groups.js";
 import {computed} from "vue";
 import CompetitionGroupTeam from "@/components/CompetitionGroupTeam.vue";
+import {useCompetitions} from "@/stores/competitions.js";
 
-const teamsStore = useTeams();
+const competitionsStore = useCompetitions();
+const groupsStore = useGroups();
 
 const props = defineProps({
   group: {
@@ -47,28 +50,9 @@ const props = defineProps({
   },
 });
 
-const groupName = computed(() => props.group === 'thirds' ? 'Best of 3rd Place' : `Group ${props.group}`);
-
-const teams = computed(() => {
-  if (props.group === 'thirds') {
-    return Object.values(teamsStore.teamsByGroup).map(group => {
-      return group.concat().sort((teamA, teamB) => {
-        return (((3 * teamB.wins) + teamB.draws) - ((3 * teamA.wins) + teamA.draws))
-          || ((teamB.goalsFor - teamB.goalsAgainst) - (teamA.goalsFor - teamA.goalsAgainst))
-          || (teamB.goalsFor - teamA.goalsFor)
-          || (teamB.wins - teamA.wins);
-      })[2];
-    }).sort((teamA, teamB) => {
-      return 0;
-    });
-  }
-
-  return teamsStore.teamsByGroup[props.group].concat().sort((teamA, teamB) => {
-    return (((3 * teamB.wins) + teamB.draws) - ((3 * teamA.wins) + teamA.draws))
-      || ((teamB.goalsFor - teamB.goalsAgainst) - (teamA.goalsFor - teamA.goalsAgainst))
-      || (teamB.goalsFor - teamA.goalsFor);
-  });
-});
+const isThirdsGroup = computed(() => props.group === 'thirds' && competitionsStore.currentCompetition?.hasBestOfThirds)
+const groupName = computed(() => isThirdsGroup.value ? 'Best of 3rd Place' : `Group ${props.group}`);
+const teams = computed(() => isThirdsGroup.value ? groupsStore.thirdPlaceGroup : groupsStore.sortedTeamsByGroup[props.group]);
 </script>
 
 <style scoped lang="scss">

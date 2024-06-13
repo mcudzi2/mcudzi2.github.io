@@ -1,9 +1,13 @@
 <template>
   <div
-    class="flex items-center gap-x-4"
+    class="flex items-center gap-x-2"
     :class="[flipped ? 'flex-row-reverse' : 'flex-row']"
   >
-    <h4 v-text="team.abbr" />
+    <h4
+      class="w-10"
+      :class="[flipped ? 'text-right' : 'text-left']"
+      v-text="team.abbr"
+    />
     <h4>|</h4>
     <h4
       class="font-normal mx-2"
