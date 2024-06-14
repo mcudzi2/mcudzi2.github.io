@@ -1,5 +1,5 @@
 <template>
-  <div class="absolute top-4 right-4 z-20 gap-x-4 flex flex-row items-start w-60">
+  <div class="absolute top-4 right-4 z-30 gap-x-4 flex flex-row items-start w-60">
     <div class="flex-1 flex flex-col gap-y-4">
       <RouterLink to="/">
         <button
@@ -50,10 +50,10 @@
   </div>
   <div
     v-if="showSuccessfulSaveMessage"
-    class="bg-lime-100 border border-lime-800 absolute top-0 left-1/2 -translate-x-1/2 z-30 mt-8 px-10 py-4 text-center space-y-6 w-full lg:w-1/2 rounded-2xl"
+    class="bg-lime-100 border border-lime-800 absolute top-0 left-1/2 -translate-x-1/2 z-40 mt-8 px-10 py-4 text-center space-y-6 w-full lg:w-1/2 rounded-2xl"
   >
-    <h3 class="text-lime-800">SUCCESS</h3>
-    <p>Your predictions have been successfully saved!</p>
+    <h3 class="!text-lime-800">SUCCESS</h3>
+    <p class="!text-neutral-700">Your predictions have been successfully saved!</p>
   </div>
   <RouterView />
 </template>
@@ -68,19 +68,20 @@ const buttonText = computed(() => darkMode.value ? 'Light Mode' : 'Dark Mode');
 const buttonClass = computed(() => darkMode.value ? 'bg-white !text-neutral-700 font-light' : 'bg-neutral-700 !text-neutral-50 font-medium');
 function toggleDarkMode() {
   darkMode.value = !darkMode.value;
-  setDarkMode();
+  setDarkMode(darkMode.value);
 }
 
-function setDarkMode() {
+function setDarkMode(value) {
+  localStorage.setItem('bracket-creator-dark-mode', value)
   const body = document.getElementsByTagName('body')[0];
-  if (darkMode.value) {
+  if (value) {
     body.classList.add('dark-mode');
   } else {
     body.classList.remove('dark-mode');
   }
 }
 
-setDarkMode()
+setDarkMode(!!localStorage.getItem('bracket-creator-dark-mode'))
 
 const showSuccessfulSaveMessage = ref(false);
 const groupsStore = useGroups();

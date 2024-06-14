@@ -1,7 +1,7 @@
 import { createRouter, createWebHistory } from 'vue-router';
 import Home from "@/pages/Home.vue";
 import Competition from "@/pages/Competition.vue";
-import CompetitionGroups from "@/pages/CompetitionGroups.vue";
+import CompetitionGroupStage from "@/pages/CompetitionGroupStage.vue";
 import CompetitionKnockout from "@/pages/CompetitionKnockout.vue";
 
 export default createRouter({
@@ -19,7 +19,7 @@ export default createRouter({
                 {
                     path: 'groups',
                     name: 'group-stage',
-                    component: CompetitionGroups,
+                    component: CompetitionGroupStage,
                 },
                 {
                     path: 'knockout',
