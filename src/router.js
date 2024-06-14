@@ -14,16 +14,16 @@ export default createRouter({
         {
             path: '/:competition',
             component: Competition,
-            redirect: { name: 'group-stage' },
+            redirect: { name: 'group' },
             children: [
                 {
                     path: 'groups',
-                    name: 'group-stage',
+                    name: 'group',
                     component: CompetitionGroupStage,
                 },
                 {
                     path: 'knockout',
-                    name: 'knockout-stage',
+                    name: 'knockout',
                     component: CompetitionKnockout,
                 },
             ],
