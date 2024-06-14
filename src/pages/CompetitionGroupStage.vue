@@ -20,6 +20,15 @@
         :index="idx"
       />
     </div>
+    <div class="w-full text-center space-y-2">
+      <button
+          type="button"
+          class="bg-lime-600/70 hover:!bg-lime-700/70 py-4 px-12 border border-neutral-500 rounded-xl mx-auto text-2xl"
+          @click="goToKnockout"
+      >
+        Save and Go to Knockout
+      </button>
+    </div>
   </div>
 </template>
 
@@ -29,7 +38,14 @@ import CompetitionPageTitle from "@/components/CompetitionPageTitle.vue";
 import {useGroups} from "@/stores/groups.js";
 import CompetitionGroups from "@/components/CompetitionGroups.vue";
 import CompetitionGroupMatch from "@/components/CompetitionGroupMatch.vue";
+import {useRouter} from "vue-router";
 
 const competitionsStore = useCompetitions();
 const groupsStore = useGroups();
+
+const router = useRouter();
+function goToKnockout() {
+  groupsStore.save();
+  router.push({name: 'knockout-stage'});
+}
 </script>
