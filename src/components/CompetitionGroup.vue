@@ -7,7 +7,7 @@
       <thead class="bg-neutral-200 font-medium">
         <tr>
           <th>Pos.</th>
-          <th class="!text-left !w-48">Team</th>
+          <th class="!text-left !w-44">Team</th>
           <th>W</th>
           <th>D</th>
           <th>L</th>
