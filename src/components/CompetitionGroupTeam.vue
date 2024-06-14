@@ -1,7 +1,7 @@
 <template>
   <tr :class="rowClass">
     <td v-text="position"/>
-    <td class="!text-left !w-56 flex flex-row items-center">
+    <td class="!text-left !w-48 flex flex-row items-center">
       <div class="w-10">{{ team.abbr }}</div>
       <div class="font-normal">| {{ team.name }}</div>
     </td>
