@@ -1,6 +1,6 @@
 import { defineStore } from "pinia";
 import { uniq, groupBy } from 'lodash';
-import {useCompetitions} from "@/stores/competitions.js";
+import { useCompetitions } from "@/stores/competitions.js";
 
 export const useGroups = defineStore('groups', {
   state: () => ({

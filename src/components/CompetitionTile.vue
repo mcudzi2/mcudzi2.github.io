@@ -5,7 +5,7 @@
         <img
           :src="imageUrl"
           :alt="name"
-          class="object-contain"
+          class="max-w-full max-h-full mx-auto"
         />
       </div>
       <h4 v-text="name" />

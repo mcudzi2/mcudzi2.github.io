@@ -3,12 +3,12 @@
     <div class="flex flex-row items-center w-full gap-x-8">
       <div
         v-if="imageUrl"
-        class="w-24 h-24"
+        class="h-24 max-w-32"
       >
         <img
           :src="imageUrl"
           :alt="name"
-          class="object-contain"
+          class="max-w-full max-h-full"
         />
       </div>
       <h1 v-text="pageHeaderText" />
