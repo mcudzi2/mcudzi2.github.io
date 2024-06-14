@@ -3,7 +3,7 @@
     <div class="flex flex-row items-center w-full gap-x-8">
       <div
         v-if="imageUrl"
-        class="h-24 max-w-32"
+        class="h-16 max-w-28 md:h-24 md:max-w-32"
       >
         <img
           :src="imageUrl"
@@ -11,7 +11,14 @@
           class="max-w-full max-h-full"
         />
       </div>
-      <h1 v-text="pageHeaderText" />
+      <h1
+          class="hidden md:block"
+          v-text="pageHeaderText"
+      />
+      <h2
+          class="block md:hidden"
+          v-text="pageHeaderText"
+      />
     </div>
     <hr class="mt-6" />
   </div>

@@ -1,6 +1,6 @@
 <template>
   <div
-    class="w-full rounded-xl py-1 px-3 flex flex-row items-center gap-x-4"
+    class="w-full rounded-xl py-1 px-3 flex flex-row items-center gap-x-2 sm:gap-x-4"
     :class="backgroundColorClasses"
   >
     <CompetitionMatchTeam
