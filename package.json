@@ -1,7 +1,6 @@
 {
   "name": "githubpage",
   "version": "0.0.0",
-  "homepage": "https://mcudzi2.github.io/",
   "private": true,
   "type": "module",
   "scripts": {
