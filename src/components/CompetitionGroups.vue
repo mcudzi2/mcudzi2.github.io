@@ -2,7 +2,7 @@
   <div class="space-y-6 w-full relative">
     <button
         type="button"
-        class="absolute top-0 right-0 p-1 bg-transparent hover:!bg-neutral-800/50 rounded-sm flex flex-row items-center gap-x-2 z-10"
+        class="absolute top-0 right-0 p-2 bg-transparent hover:!bg-neutral-400/50 rounded-sm flex flex-row items-center gap-x-2 z-10"
         @click="toggleShow"
     >
       <span>{{ show ? 'Hide' : 'Show' }}</span>

@@ -63,25 +63,25 @@ import {computed, ref} from "vue";
 import {useGroups} from "@/stores/groups.js";
 
 const expandedMenu = ref(false);
-const darkMode = ref(false);
+const darkMode = ref(localStorage.getItem('bracket-creator-dark-mode') === 'T');
 const buttonText = computed(() => darkMode.value ? 'Light Mode' : 'Dark Mode');
 const buttonClass = computed(() => darkMode.value ? 'bg-white !text-neutral-700 font-light' : 'bg-neutral-700 !text-neutral-50 font-medium');
 function toggleDarkMode() {
   darkMode.value = !darkMode.value;
-  setDarkMode(darkMode.value);
+  localStorage.setItem('bracket-creator-dark-mode', darkMode.value ? 'T' : 'F');
+  setDarkMode();
 }
 
-function setDarkMode(value) {
-  localStorage.setItem('bracket-creator-dark-mode', value)
+function setDarkMode() {
   const body = document.getElementsByTagName('body')[0];
-  if (value) {
+  if (darkMode.value) {
     body.classList.add('dark-mode');
   } else {
     body.classList.remove('dark-mode');
   }
 }
 
-setDarkMode(!!localStorage.getItem('bracket-creator-dark-mode'))
+setDarkMode();
 
 const showSuccessfulSaveMessage = ref(false);
 const groupsStore = useGroups();

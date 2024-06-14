@@ -1,6 +1,6 @@
 <template>
   <RouterLink :to="link">
-    <div class="container">
+    <div class="container hover:opacity-75">
       <div class="w-full h-1/2">
         <img
           :src="imageUrl"
