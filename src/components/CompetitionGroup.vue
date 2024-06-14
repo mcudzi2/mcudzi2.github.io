@@ -6,7 +6,7 @@
     <table class="w-full rounded-b-md rounded-tr-md overflow-hidden">
       <thead class="bg-neutral-200 font-medium">
         <tr>
-          <th>Pos.</th>
+          <th class="hidden sm:table-cell">Pos.</th>
           <th class="!text-left !w-44">Team</th>
           <th>W</th>
           <th>D</th>

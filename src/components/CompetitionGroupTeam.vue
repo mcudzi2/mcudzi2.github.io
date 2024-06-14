@@ -1,6 +1,9 @@
 <template>
   <tr :class="rowClass">
-    <td v-text="position"/>
+    <td
+        class="hidden sm:table-cell"
+        v-text="position"
+    />
     <td class="!text-left !w-44 flex flex-row items-center">
       <div class="w-10">{{ team.abbr }}</div>
       <div class="font-normal">| {{ team.name }}</div>
