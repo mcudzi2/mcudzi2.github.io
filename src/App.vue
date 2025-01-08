@@ -1,101 +1,91 @@
 <template>
-  <div class="absolute top-4 right-4 z-30 gap-x-4 flex flex-row items-start w-60">
-    <div class="flex-1 flex flex-col gap-y-4">
-      <RouterLink to="/">
-        <button
-            type="button"
-            class="p-3 border border-neutral rounded-md w-full"
-            :class="buttonClass"
-        >
-          Home
-        </button>
-      </RouterLink>
-      <button
-          v-if="expandedMenu"
-          type="button"
-          class="p-3 border border-neutral rounded-md w-full"
-          :class="buttonClass"
-          @click="savePredictions"
-      >
-        Save Predictions
-      </button>
-      <button
-          v-if="expandedMenu"
-          type="button"
-          class="p-3 border border-neutral rounded-md w-full"
-          :class="buttonClass"
-          @click="clearPredictions"
-      >
-        Clear Predictions
-      </button>
-      <button
-          v-if="expandedMenu"
-          type="button"
-          class="p-3 border border-neutral rounded-md w-full"
-          :class="buttonClass"
-          v-text="buttonText"
-          @click="toggleDarkMode"
+  <div class="absolute top-4 left-4">
+    <RouterLink :to="{ name: 'homepage' }">
+      <SvgIcon
+          name="github-mark"
+          title="Home"
+          class="text-4xl text-neutral-500 hover:text-emerald-700 hover:scale-110 transition-transform cursor-pointer"
       />
-    </div>
-    <div class="w-12">
-      <button
-          type="button"
-          class="p-3 border border-neutral rounded-md w-full"
-          :class="[buttonClass, expandedMenu ? '' : 'rotate-180']"
-          @click="expandedMenu = !expandedMenu"
-      >
-        &#11165;
-      </button>
-    </div>
+    </RouterLink>
   </div>
-  <div
-    v-if="showSuccessfulSaveMessage"
-    class="bg-lime-100 border border-lime-800 absolute top-0 left-1/2 -translate-x-1/2 z-40 mt-8 px-10 py-4 text-center space-y-6 w-full lg:w-1/2 rounded-2xl"
-  >
-    <h3 class="!text-lime-800">SUCCESS</h3>
-    <p class="!text-neutral-700">Your predictions have been successfully saved!</p>
+  <div class="dark-mode-trigger-container">
+    <SvgIcon
+      name="sun"
+      title="Light Mode"
+      class="icon light-mode-icon"
+      :class="{ active: !darkMode }"
+      @click="setDarkMode(false)"
+    />
+    <SvgIcon
+      name="moon"
+      title="Dark Mode"
+      class="icon dark-mode-icon"
+      :class="{ active: darkMode }"
+      @click="setDarkMode(true)"
+    />
   </div>
   <RouterView />
 </template>
 
 <script setup>
-import {computed, ref} from "vue";
-import {useGroups} from "@/stores/groups.js";
+import { ref, watch } from 'vue';
+import SvgIcon from "@/components/SvgIcon.vue";
 
-const expandedMenu = ref(false);
-const darkMode = ref(localStorage.getItem('bracket-creator-dark-mode') === 'T');
-const buttonText = computed(() => darkMode.value ? 'Light Mode' : 'Dark Mode');
-const buttonClass = computed(() => darkMode.value ? 'bg-white !text-neutral-700 font-light' : 'bg-neutral-700 !text-neutral-50 font-medium');
-function toggleDarkMode() {
-  darkMode.value = !darkMode.value;
-  localStorage.setItem('bracket-creator-dark-mode', darkMode.value ? 'T' : 'F');
-  setDarkMode();
-}
-
-function setDarkMode() {
-  const body = document.getElementsByTagName('body')[0];
-  if (darkMode.value) {
-    body.classList.add('dark-mode');
-  } else {
-    body.classList.remove('dark-mode');
+const darkMode = ref(false);
+watch(() => darkMode.value, (newValue, oldValue) => {
+  if (oldValue !== newValue) {
+    if (newValue) {
+      document.body.classList.add('dark');
+    } else {
+      document.body.classList.remove('dark');
+    }
   }
+});
+
+function setDarkMode (value) {
+  darkMode.value = value;
+  localStorage.setItem('app-theme', value ? 'dark' : 'light');
 }
 
-setDarkMode();
-
-const showSuccessfulSaveMessage = ref(false);
-const groupsStore = useGroups();
-function savePredictions() {
-  if (groupsStore.save()) {
-    showSuccessfulSaveMessage.value = true;
-    setTimeout(() => {
-      showSuccessfulSaveMessage.value = false;
-    }, 2000);
-  } else {
-    alert("ERROR: Unable to save match predictions because there is nothing to save.");
-  }
-}
-function clearPredictions() {
-  groupsStore.clear();
+const savedSetting = localStorage.getItem('app-theme');
+if (!savedSetting) {
+  // Use OS/browser preference
+  darkMode.value = window.matchMedia('(prefers-color-scheme: dark)').matches;
+} else {
+  darkMode.value = (savedSetting === 'dark');
 }
 </script>
+
+<style scoped lang="scss">
+.dark-mode-trigger-container {
+  @apply transition-all absolute top-2 right-4;
+  @apply flex flex-row gap-x-3 p-2;
+  @apply rounded-md opacity-70 cursor-pointer;
+
+  &:hover {
+    @apply top-3 right-6 scale-125 opacity-100 bg-neutral-500/10;
+  }
+
+  .icon {
+    @apply text-2xl text-neutral-500 p-0.5 opacity-100;
+
+    &.light-mode-icon {
+      &.active {
+        @apply text-amber-500;
+      }
+      &:hover {
+        @apply text-amber-400;
+      }
+    }
+
+    &.dark-mode-icon {
+      &.active {
+        @apply text-indigo-900 dark:text-indigo-700;
+      }
+      &:hover {
+        @apply text-indigo-700 dark:text-indigo-600;
+      }
+    }
+  }
+}
+</style>
