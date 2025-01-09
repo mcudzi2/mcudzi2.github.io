@@ -31,7 +31,7 @@ const props = defineProps({
 });
 
 const icon = defineAsyncComponent(() =>
-  import(`/src/assets/icons/${props.name}.svg`)
+  import(`../assets/icons/${props.name}.svg`)
 );
 
 const containerClasses = computed(() => ({
