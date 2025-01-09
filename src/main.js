@@ -1,13 +1,18 @@
 import './assets/main.scss';
 import { createPinia } from "pinia";
-import router from './router.js';
+import { configureRouter } from './router.js';
 
 import { createApp } from 'vue';
 import App from './App.vue';
+import AppManager from "@/services/AppManager.js";
+import { appConfig as pokedexTracker } from "@/apps/PokedexTracker/app.config.js";
+
+AppManager.registerApp(pokedexTracker);
 
 const pinia = createPinia();
+const router = configureRouter();
 
-const app = createApp(App);
-app.use(pinia);
-app.use(router);
-app.mount('#app');
+const mainApp = createApp(App);
+mainApp.use(pinia);
+mainApp.use(router);
+mainApp.mount('#app');

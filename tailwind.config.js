@@ -1,5 +1,6 @@
 /** @type {import('tailwindcss').Config} */
 export default {
+  darkMode: 'selector',
   content: [
       "./index.html",
       "./src/**/*.{vue,js}",
@@ -17,6 +18,9 @@ export default {
           "Segoe UI Symbol",
           "Noto Color Emoji",
         ],
+      },
+      spacing: {
+        font: '1em',
       },
     },
   },
