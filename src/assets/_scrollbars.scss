@@ -1,0 +1,26 @@
+::-webkit-scrollbar {
+  @apply h-2 w-2;
+}
+
+/* Track */
+::-webkit-scrollbar-track {
+  @apply rounded-lg bg-neutral-500/10;
+}
+
+/* Handle */
+::-webkit-scrollbar-thumb {
+  @apply rounded-lg bg-neutral-500/75;
+
+  &:hover {
+    @apply bg-neutral-500/90;
+  }
+
+  &:focus, &:active {
+    @apply bg-neutral-500;
+  }
+}
+
+/* Handle on hover */
+::-webkit-scrollbar-thumb:hover {
+  background: #555;
+}

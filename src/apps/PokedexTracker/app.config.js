@@ -1,10 +1,14 @@
 import PokedexTracker from "@/apps/PokedexTracker/PokedexTracker.vue";
+import Pokedex from "@/apps/PokedexTracker/pages/Pokedex.vue";
 
-const appName = "My First App";
-const basePath = '/my-first-app';
+const appName = "Pokedex Tracker";
+const basePath = '/pokedex-tracker';
 const baseComponent = PokedexTracker;
 const routes = [
-
+    {
+        path: '',
+        component: Pokedex,
+    },
 ];
 
 const appCardConfig = {
