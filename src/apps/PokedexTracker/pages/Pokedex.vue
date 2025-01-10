@@ -126,7 +126,7 @@ function loadMore(loadAll = false) {
 
   const requests = [];
   const chunkSize = loadAll ? 10000 : batchSize;
-  for (let i = 999; i < 999 + chunkSize && i < species.value.length; i++) {
+  for (let i = pokemonList.value.length; i < pokemonList.value.length + chunkSize && i < species.value.length; i++) {
     const url = species.value[i].url;
     const uri = url.substring(url.indexOf('pokemon-species'));
     requests.push(PokemonApi.get(uri));
