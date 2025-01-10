@@ -29,3 +29,10 @@ export function removeTrailingSlashes(str) {
     }
     return str.replace(/\/+$/g, '', str);
 }
+
+export function toTitleCase(str) {
+    if (!str?.length) {
+        return '';
+    }
+    return str.charAt(0).toLocaleUpperCase() + str.substring(1).toLocaleLowerCase();
+}
