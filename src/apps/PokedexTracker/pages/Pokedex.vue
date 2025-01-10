@@ -117,7 +117,7 @@ function getValueForLanguage(obj, language, key) {
   return nameEntry ? nameEntry[key] : null;
 }
 
-const batchSize = 25;
+const batchSize = 100;
 const cannotLoadMore = computed(() => pokemonList.value?.length >= species.value?.length);
 function loadMore(loadAll = false) {
   if (cannotLoadMore.value) {
