@@ -1,18 +1,38 @@
 <template>
-  <div class="space-y-6">
-    <div class="w-full max-h-[80vh] overflow-auto">
+  <div class="space-y-4 sm:space-y-6">
+    <div class="flex flex-row items-center justify-center">
+      <InputSearch
+        class="max-w-full w-96"
+        @search="searchBy = $event"
+      />
+    </div>
+    <p
+      v-if="['kalos', 'galar', 'paldea'].includes(sortBy.key)"
+      class="rounded-xl p-4 text-lg bg-amber-300 border-2 border-amber-400 text-center"
+    >
+      Unfortunately, sorting by regions with multiple pokedexes is not supported at this time.
+    </p>
+    <div class="w-full max-h-[75vh] overflow-auto">
       <div class="pokedex-table grid grid-cols-12 min-w-[955px] relative">
         <div class="grid grid-cols-subgrid col-span-full sticky top-0 bg-neutral-50 dark:bg-neutral-800 z-20">
           <h5
             v-for="column in columns"
             :key="`header-${column.key}`"
-            v-text="column.name"
-            class="cell header-cell"
+            class="cell header-cell flex flex-row items-center gap-x-0.5 cursor-pointer"
             :class="column.headerClasses"
-          />
+            @click="toggleSort(column.key)"
+          >
+            {{ column.name }}
+            <SvgIcon
+              name="caret"
+              :rotate="sortBy.dir === 'asc' ? 0 : 180"
+              class="sort-icon text-base sm:text-xl opacity-0"
+              :class="{ '!opacity-100': sortBy.key === column.key }"
+            />
+          </h5>
         </div>
         <template
-          v-for="pokemon in pokemonList"
+          v-for="pokemon in processedPokemonList"
           :key="pokemon.id"
         >
           <div
@@ -66,28 +86,80 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue';
+import {ref, computed, onMounted, reactive} from 'vue';
 import PokemonApi from "@/services/apis/PokemonApi.js";
 import { toTitleCase } from "@/services/Utils.js";
+import SvgIcon from "@/components/SvgIcon.vue";
+import InputSearch from "@/components/InputSearch.vue";
 
 const columns = [
-  { key: 'national', name: "#", headerClasses: "text-right sticky -left-5 sm:-left-3", rowClasses: "items-end sticky -left-5 sm:-left-3" },
+  { key: 'national', name: "#", headerClasses: "justify-end sticky -left-5 sm:-left-3", rowClasses: "items-end sticky -left-5 sm:-left-3" },
   { key: 'name', name: "Name", headerClasses: "col-span-2 sticky left-14 sm:left-16", rowClasses: "col-span-2 font-medium sticky left-14 sm:left-16" },
-  { key: 'kanto', name: "Kanto", headerClasses: "text-center", rowClasses: "items-center" },
-  { key: 'johto', name: "Johto", headerClasses: "text-center", rowClasses: "items-center" },
-  { key: 'hoenn', name: "Hoenn", headerClasses: "text-center", rowClasses: "items-center" },
-  { key: 'sinnoh', name: "Sinnoh", headerClasses: "text-center", rowClasses: "items-center" },
-  { key: 'unova', name: "Unova", headerClasses: "text-center", rowClasses: "items-center" },
-  { key: 'kalos', name: "Kalos", headerClasses: "text-center", rowClasses: "items-center" },
-  { key: 'alola', name: "Alola", headerClasses: "text-center", rowClasses: "items-center" },
-  { key: 'galar', name: "Galar", headerClasses: "text-center", rowClasses: "items-center" },
-  { key: 'paldea', name: "Paldea", headerClasses: "text-center", rowClasses: "items-center" },
+  { key: 'kanto', name: "Kanto", headerClasses: "justify-center", rowClasses: "items-center" },
+  { key: 'johto', name: "Johto", headerClasses: "justify-center", rowClasses: "items-center" },
+  { key: 'hoenn', name: "Hoenn", headerClasses: "justify-center", rowClasses: "items-center" },
+  { key: 'sinnoh', name: "Sinnoh", headerClasses: "justify-center", rowClasses: "items-center" },
+  { key: 'unova', name: "Unova", headerClasses: "justify-center", rowClasses: "items-center" },
+  { key: 'kalos', name: "Kalos", headerClasses: "justify-center", rowClasses: "items-center" },
+  { key: 'alola', name: "Alola", headerClasses: "justify-center", rowClasses: "items-center" },
+  { key: 'galar', name: "Galar", headerClasses: "justify-center", rowClasses: "items-center" },
+  { key: 'paldea', name: "Paldea", headerClasses: "justify-center", rowClasses: "items-center" },
 ];
 
 const pokedexes = ref({});
 const species = ref([]);
 const pokemonList = ref([]);
 const completionData = ref(JSON.parse(window.localStorage.getItem('mcudzi2:pokedex-tracker:completion') || '{}'));
+const searchBy = ref('');
+const sortBy = reactive({
+  key: '',
+  dir: 'asc',
+});
+
+const processedPokemonList = computed(() => {
+  return pokemonList.value.filter(pokemon => {
+    return !searchBy.value
+        || pokemon.name.toLocaleLowerCase().trim().includes(searchBy.value.toLocaleLowerCase().trim());
+  }).sort((pokemonA, pokemonB) => {
+    if (!sortBy.key || !sortBy.dir) {
+      return pokemonA.national.national.value - pokemonB.national.national.value; // unsorted - sort by national number asc
+    }
+    if (sortBy.key === 'name') {
+      return sortBy.dir === 'asc'
+        ? pokemonA.name.localeCompare(pokemonB.name)
+        : pokemonA.name.localeCompare(pokemonB.name);
+    }
+    if (['kalos', 'galar', 'paldea'].includes(sortBy.key)) {
+      return 1; // TODO: Handle multiple pokedexes per region
+    }
+    const pokemonANumber = Object.values(pokemonA[sortBy.key])[0].value;
+    const pokemonBNumber = Object.values(pokemonB[sortBy.key])[0].value;
+    if (!pokemonANumber && pokemonBNumber) {
+      return 1;
+    }
+    if (!pokemonBNumber && pokemonANumber) {
+      return -1;
+    }
+    if (!pokemonANumber && !pokemonBNumber) {
+      return sortBy.dir === 'asc'
+        ? pokemonA.national.national.value - pokemonB.national.national.value
+        : pokemonB.national.national.value - pokemonA.national.national.value; // sort by national number
+    }
+    return sortBy.dir === 'asc'
+      ? pokemonANumber - pokemonBNumber
+      : pokemonBNumber - pokemonANumber;
+  });
+})
+
+function toggleSort(columnKey) {
+  if (columnKey !== sortBy.key) {
+    sortBy.key = columnKey;
+    sortBy.dir = 'asc';
+  } else {
+    sortBy.key = sortBy.dir === 'desc' ? '' : columnKey;
+    sortBy.dir = sortBy.dir === 'asc' ? 'desc' : 'asc';
+  }
+}
 
 function getNumberForPokedex(pokemonObj, pokedex) {
   if (!Array.isArray(pokedex)) {
@@ -220,7 +292,6 @@ onMounted(() => {
                 || toTitleCase(pokedex.name) + ' dex',
             };
           }, {});
-          console.log(pokedexes.value);
         });
     })
 });
@@ -238,6 +309,16 @@ onMounted(() => {
 
   .header-cell {
     @apply border-b-2 border-slate-400/50 text-base sm:text-xl;
+
+    .sort-icon {
+      @apply text-base sm:text-lg opacity-0;
+    }
+
+    &:hover {
+      .sort-icon {
+        @apply opacity-60;
+      }
+    }
   }
 
   .body-cell {
