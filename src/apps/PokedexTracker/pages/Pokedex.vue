@@ -1,275 +1,185 @@
 <template>
   <div class="space-y-4 sm:space-y-6">
-    <div class="flex flex-row items-center justify-center">
+    <div class="flex flex-row items-center justify-center gap-x-6">
       <InputSearch
         class="max-w-full w-96"
         @search="searchBy = $event"
       />
+      <ActionButton
+        text="Table Settings"
+        type="secondary"
+        :disabled="loading"
+        @click="showTableSettings = true"
+      />
     </div>
-    <p
-      v-if="['kalos', 'galar', 'paldea'].includes(sortBy.key)"
-      class="rounded-xl p-4 text-lg bg-amber-300 border-2 border-amber-400 text-center"
-    >
-      Unfortunately, sorting by regions with multiple pokedexes is not supported at this time.
-    </p>
     <div class="w-full max-h-[75vh] overflow-auto">
-      <div class="pokedex-table grid grid-cols-12 min-w-[955px] relative">
-        <div class="grid grid-cols-subgrid col-span-full sticky top-0 bg-neutral-50 dark:bg-neutral-800 z-20">
-          <h5
-            v-for="column in columns"
-            :key="`header-${column.key}`"
-            class="cell header-cell flex flex-row items-center gap-x-0.5 cursor-pointer"
-            :class="column.headerClasses"
-            @click="toggleSort(column.key)"
-          >
-            {{ column.name }}
-            <SvgIcon
-              name="caret"
-              :rotate="sortBy.dir === 'asc' ? 0 : 180"
-              class="sort-icon text-base sm:text-xl opacity-0"
-              :class="{ '!opacity-100': sortBy.key === column.key }"
-            />
-          </h5>
-        </div>
+      <DataTable
+        v-model:sort-by="sortBy"
+        :headers="columns"
+        :items="pokemonList"
+        fix-headers
+        :search-term="searchBy"
+        search-fields="name"
+        :style="tableStyles"
+      >
         <template
-          v-for="pokemon in processedPokemonList"
-          :key="pokemon.id"
+          v-for="pokedexColumn in pokedexColumns"
+          :key="pokedexColumn.value"
+          #[`item-${pokedexColumn.value}`]="item"
         >
-          <div
-            v-for="column in columns"
-            :key="`row-${pokemon.id}-${column.key}`"
-            class="cell body-cell flex flex-col"
-            :class="column.rowClasses"
+          <template
+            v-for="(number, pokedex) in item[pokedexColumn.value]"
+            :key="`row-${item.id}-${pokedex}`"
           >
-            <template v-if="column.key !== 'name'">
+            <div
+              v-if="tableSettings.pokedexes[pokedex] || pokedex === 'national'"
+              class="flex flex-row items-center gap-x-1 sm:gap-x-1.5"
+              :class="{ 'cursor-pointer': number }"
+              @click="number && toggleEntry(pokedexColumn.value, pokedex, number)"
+            >
+              <span v-tippy="number ? pokedexes[pokedex] : null">
+                {{ number || '-' }}
+              </span>
               <div
-                v-for="(number, pokedex) in pokemon[column.key]"
-                :key="`row-${pokemon.id}-${column.key}-${pokedex}`"
-                class="flex flex-row items-center gap-x-1 sm:gap-x-1.5"
-                :class="{ 'cursor-pointer': number.value }"
-                @click="number.value && toggleEntry(pokemon.id, column.key, pokedex)"
-              >
-                <span v-tippy="pokedexes[pokedex]">
-                  {{ number.value || '-' }}
-                </span>
-                <div
-                  class="h-4 w-4 rounded-full bg-transparent border border-transparent"
-                  :class="{ 'drop-shadow !border-neutral-300 dark:border-neutral-700 bg-gradient-to-b from-red-700 from-50% to-white to-50%': number.completed}"
-                />
-              </div>
-            </template>
-            <p
-              v-else
-              v-text="pokemon[column.key]"
-            />
-          </div>
+                class="h-4 w-4 rounded-full bg-transparent border border-transparent"
+                :class="{ 'drop-shadow !border-neutral-300 dark:border-neutral-700 bg-gradient-to-b from-red-700 from-50% to-white to-50%': completionData[pokedexColumn.value]?.[pokedex]?.[number] }"
+              />
+            </div>
+          </template>
         </template>
-      </div>
+      </DataTable>
     </div>
     <div class="flex flex-row items-center justify-center gap-x-6">
-      <button
+      <ActionButton
           v-if="!cannotLoadMore"
-          class="bg-red-800 text-neutral-50 hover:opacity-75 cursor-pointer rounded-md px-6 py-3 text-lg"
+          size="lg"
+          :disabled="loading"
           @click="loadMore(false)"
       >
         Load {{ batchSize }} More
-      </button>
-      <button
+      </ActionButton>
+      <ActionButton
           v-if="!cannotLoadMore"
-          class="bg-neutral-600 text-neutral-50 hover:opacity-75 cursor-pointer rounded-md px-6 py-3 text-lg"
+          type="secondary"
+          text="Clear Capture Data"
+          size="lg"
           @click="clearCompletion"
-      >
-        Clear Capture Data
-      </button>
+      />
     </div>
+    <TableSettings
+      v-model:show="showTableSettings"
+      v-model:settings="tableSettings"
+      :regions="regions"
+      :pokedexes="pokedexes"
+      @update="saveSettings"
+    />
   </div>
 </template>
 
 <script setup>
-import {ref, computed, onMounted, reactive} from 'vue';
+import { ref, computed, onMounted, reactive, watch } from 'vue';
 import PokemonApi from "@/services/apis/PokemonApi.js";
 import { toTitleCase } from "@/services/Utils.js";
-import SvgIcon from "@/components/SvgIcon.vue";
 import InputSearch from "@/components/InputSearch.vue";
+import TableSettings from "../components/TableSettings.vue";
+import ActionButton from "@/components/ActionButton.vue";
+import DataTable from "@/components/DataTable.vue";
 
-const columns = [
-  { key: 'national', name: "#", headerClasses: "justify-end sticky -left-5 sm:-left-3", rowClasses: "items-end sticky -left-5 sm:-left-3" },
-  { key: 'name', name: "Name", headerClasses: "col-span-2 sticky left-14 sm:left-16", rowClasses: "col-span-2 font-medium sticky left-14 sm:left-16" },
-  { key: 'kanto', name: "Kanto", headerClasses: "justify-center", rowClasses: "items-center" },
-  { key: 'johto', name: "Johto", headerClasses: "justify-center", rowClasses: "items-center" },
-  { key: 'hoenn', name: "Hoenn", headerClasses: "justify-center", rowClasses: "items-center" },
-  { key: 'sinnoh', name: "Sinnoh", headerClasses: "justify-center", rowClasses: "items-center" },
-  { key: 'unova', name: "Unova", headerClasses: "justify-center", rowClasses: "items-center" },
-  { key: 'kalos', name: "Kalos", headerClasses: "justify-center", rowClasses: "items-center" },
-  { key: 'alola', name: "Alola", headerClasses: "justify-center", rowClasses: "items-center" },
-  { key: 'galar', name: "Galar", headerClasses: "justify-center", rowClasses: "items-center" },
-  { key: 'paldea', name: "Paldea", headerClasses: "justify-center", rowClasses: "items-center" },
+const loading = ref(false);
+
+const regions = ref([]);
+function initRegions(params = {}) {
+  return PokemonApi.get('region', { params })
+    .then(response => {
+      const requests = response.results.map(region => {
+        const uri = region.url.substring(region.url.indexOf('region'));
+        return PokemonApi.get(uri);
+      });
+
+      Promise.all(requests)
+        .then(responses => {
+          regions.value = responses.map(region => ({
+            key: region.name,
+            name: getValueForLanguage(region, 'en', 'name'),
+            pokedexes: region.pokedexes.map(pokedex => pokedex.name) || [],
+          }));
+        });
+    });
+}
+
+const columns = computed(() => {
+  const baseColumns = [
+    {
+      value: 'national',
+      name: "#",
+      headerClasses: "justify-end sticky -left-5 sm:-left-3",
+      rowClasses: "items-end sticky -left-5 sm:-left-3",
+      pokedexes: ['national'],
+      sortBy: 'national.national',
+    },
+    {
+      value: 'name',
+      name: "Name",
+      headerClasses: "sticky left-14 sm:left-16",
+      rowClasses: "font-medium sticky left-14 sm:left-16",
+    },
+  ];
+  const regionColumns = regions.value?.map(region => ({
+    value: region.key,
+    name: region.name,
+    headerClasses: "justify-center",
+    rowClasses: "items-center",
+    pokedexes: region.pokedexes,
+    sortBy: region.pokedexes
+      .filter(pokedex => !!tableSettings.value?.pokedexes?.[pokedex])
+      .map(pokedex => `${region.key}.${pokedex}`),
+  })).filter(region => region.pokedexes.some(pokedex => !!tableSettings.value?.pokedexes?.[pokedex])) || [];
+  return baseColumns.concat(regionColumns);
+});
+const pokedexColumns = computed(() => columns.value.filter(column => column.pokedexes?.length > 0));
+
+const tableStyles = computed(() => ({
+  minWidth: (columns.value.length * 115) + 'px',
+}));
+
+const showTableSettings = ref(false);
+const defaultPokedexes = [
+  'kanto',
+  'original-johto',
+  'hoenn',
+  'extended-sinnoh',
+  'original-unova',
+  'kalos-central',
+  'kalos-coastal',
+  'kalos-mountain',
+  'updated-alola',
+  'galar',
+  'isle-of-armor',
+  'crown-tundra',
+  'hisui',
+  'paldea',
+  'kitakami',
+  'blueberry',
 ];
+const tableSettings = ref(JSON.parse(window.localStorage.getItem('mcudzi2:pokedex-tracker:settings') || 'null') || {
+  pokedexes: {},
+});
 
-const pokedexes = ref({});
-const species = ref([]);
-const pokemonList = ref([]);
-const completionData = ref(JSON.parse(window.localStorage.getItem('mcudzi2:pokedex-tracker:completion') || '{}'));
+function saveSettings() {
+  window.localStorage.setItem('mcudzi2:pokedex-tracker:settings', JSON.stringify(tableSettings.value));
+}
+
 const searchBy = ref('');
 const sortBy = reactive({
+  header: '',
   key: '',
   dir: 'asc',
 });
 
-const processedPokemonList = computed(() => {
-  return pokemonList.value.filter(pokemon => {
-    return !searchBy.value
-        || pokemon.name.toLocaleLowerCase().trim().includes(searchBy.value.toLocaleLowerCase().trim());
-  }).sort((pokemonA, pokemonB) => {
-    if (!sortBy.key || !sortBy.dir) {
-      return pokemonA.national.national.value - pokemonB.national.national.value; // unsorted - sort by national number asc
-    }
-    if (sortBy.key === 'name') {
-      return sortBy.dir === 'asc'
-        ? pokemonA.name.localeCompare(pokemonB.name)
-        : pokemonA.name.localeCompare(pokemonB.name);
-    }
-    if (['kalos', 'galar', 'paldea'].includes(sortBy.key)) {
-      return 1; // TODO: Handle multiple pokedexes per region
-    }
-    const pokemonANumber = Object.values(pokemonA[sortBy.key])[0].value;
-    const pokemonBNumber = Object.values(pokemonB[sortBy.key])[0].value;
-    if (!pokemonANumber && pokemonBNumber) {
-      return 1;
-    }
-    if (!pokemonBNumber && pokemonANumber) {
-      return -1;
-    }
-    if (!pokemonANumber && !pokemonBNumber) {
-      return sortBy.dir === 'asc'
-        ? pokemonA.national.national.value - pokemonB.national.national.value
-        : pokemonB.national.national.value - pokemonA.national.national.value; // sort by national number
-    }
-    return sortBy.dir === 'asc'
-      ? pokemonANumber - pokemonBNumber
-      : pokemonBNumber - pokemonANumber;
-  });
-})
-
-function toggleSort(columnKey) {
-  if (columnKey !== sortBy.key) {
-    sortBy.key = columnKey;
-    sortBy.dir = 'asc';
-  } else {
-    sortBy.key = sortBy.dir === 'desc' ? '' : columnKey;
-    sortBy.dir = sortBy.dir === 'asc' ? 'desc' : 'asc';
-  }
-}
-
-function getNumberForPokedex(pokemonObj, pokedex) {
-  if (!Array.isArray(pokedex)) {
-    const pokedexEntry = pokemonObj.pokedex_numbers.find(entry => entry.pokedex.name === pokedex);
-    return {
-      [pokedex]: {
-        value: (pokedexEntry ? pokedexEntry.entry_number : 0),
-        completed: !!pokedexEntry && !!completionData.value?.[pokemonObj.id]?.[pokedex],
-      } };
-  } else {
-    const pokedexEntries = pokemonObj.pokedex_numbers.filter(entry => pokedex.includes(entry.pokedex.name));
-    return pokedexEntries.length
-        ? pokedexEntries.reduce((obj, entry) => ({
-          ...obj,
-          [entry.pokedex.name]: {
-            value: entry.entry_number,
-            completed: !!completionData.value?.[pokemonObj.id]?.[entry.pokedex.name],
-          },
-        }), {})
-        : { [pokedex[0]]: { value: 0, completed: false } };
-  }
-}
-
-function getValueForLanguage(obj, language, key) {
-  const groupKey = `${key}s`;
-  const nameEntry = obj[groupKey].find(entry => entry.language.name === language);
-  return nameEntry ? nameEntry[key] : null;
-}
-
-const batchSize = 100;
-const cannotLoadMore = computed(() => pokemonList.value?.length >= species.value?.length);
-function loadMore(loadAll = false) {
-  if (cannotLoadMore.value) {
-    return;
-  }
-
-  const requests = [];
-  const chunkSize = loadAll ? 10000 : batchSize;
-  for (let i = pokemonList.value.length; i < pokemonList.value.length + chunkSize && i < species.value.length; i++) {
-    const url = species.value[i].url;
-    const uri = url.substring(url.indexOf('pokemon-species'));
-    requests.push(PokemonApi.get(uri));
-  }
-
-  Promise.all(requests)
-      .then(responses => {
-        responses.forEach(response => pokemonList.value.push({
-          id: response.id,
-          national: getNumberForPokedex(response, 'national'),
-          name: getValueForLanguage(response, 'en', 'name'),
-          kanto: getNumberForPokedex(response, 'kanto'),
-          johto: getNumberForPokedex(response, 'original-johto'),
-          hoenn: getNumberForPokedex(response, 'hoenn'),
-          sinnoh: getNumberForPokedex(response, 'extended-sinnoh'),
-          unova: getNumberForPokedex(response, 'original-unova'),
-          kalos: getNumberForPokedex(response, ['kalos-central', 'kalos-coastal', 'kalos-mountain']),
-          alola: getNumberForPokedex(response, 'updated-alola'),
-          galar: getNumberForPokedex(response, ['galar', 'isle-of-armor', 'crown-tundra']),
-          paldea: getNumberForPokedex(response, ['paldea', 'kitakami', 'blueberry']),
-        }));
-      });
-}
-
-function saveCompletion(id, pokedex, value) {
-  if (completionData.value[id] === undefined) {
-    completionData.value[id] = {};
-  }
-  completionData.value[id][pokedex] = value;
-  window.localStorage.setItem('mcudzi2:pokedex-tracker:completion', JSON.stringify(completionData.value));
-}
-
-function toggleEntry(id, region, pokedex) {
-  const index = pokemonList.value.findIndex(pokemon => pokemon.id === id);
-  if (index < 0) {
-    return;
-  }
-
-  const currentValue = !!pokemonList.value[index][region][pokedex].completed;
-  pokemonList.value[index][region][pokedex].completed = !currentValue;
-  saveCompletion(id, pokedex, !currentValue);
-}
-
-function clearCompletion() {
-  if (confirm("Clearing Pokedex Completion - this will overwrite your saved data. This CANNOT be undone. Are you sure?")) {
-    completionData.value = {};
-    pokemonList.value.forEach(pokemon => {
-      Object.keys(pokemon).forEach(key => {
-        if (['id', 'name'].includes(key)) {
-          return;
-        }
-        Object.keys(pokemon[key]).forEach(pokedex => {
-          pokemon[key][pokedex].completed = false;
-        })
-      })
-    })
-    window.localStorage.removeItem('mcudzi2:pokedex-tracker:completion');
-  }
-}
-
-onMounted(() => {
-  const noLimitParams = {
-    limit: 10000,
-    offset: 0,
-  };
-  PokemonApi.get('pokemon-species', { params: noLimitParams })
-    .then(response => {
-      species.value = response.results;
-      loadMore(false);
-    });
-  PokemonApi.get('pokedex', { params: noLimitParams })
+const pokedexes = ref({});
+const pokedexesForDisplay = ref(tableSettings.value?.pokedexes || {});
+function initPokedexMetadata(params = {}) {
+  PokemonApi.get('pokedex', { params })
     .then(response => {
       const requests = response.results.map(pokedex => {
         const uri = pokedex.url.substring(pokedex.url.indexOf('pokedex'));
@@ -288,41 +198,110 @@ onMounted(() => {
             return {
               ...pokedexMap,
               [pokedex.name]: (extendedDescIndex > 0 ? pokedexDesc.substring(0, extendedDescIndex) : pokedexDesc)
-                || (pokedexName ? `${pokedexName} dex` : '')
-                || toTitleCase(pokedex.name) + ' dex',
+              || (pokedexName ? `${pokedexName} dex` : '')
+              || toTitleCase(pokedex.name) + ' dex',
             };
           }, {});
+          Object.keys(pokedexes.value).forEach(pokedexName => {
+            if (!Object.keys(tableSettings.value.pokedexes).includes(pokedexName)) {
+              tableSettings.value.pokedexes[pokedexName] = defaultPokedexes.includes(pokedexName);
+            }
+          });
+          saveSettings();
         });
     })
-});
-</script>
+}
 
-<style scoped lang="scss">
-.pokedex-table {
-  .cell {
-    @apply p-1 sm:py-3 sm:px-2;
+const species = ref([]);
+const pokemonList = ref([]);
+function initPokemon(params = {}) {
+  PokemonApi.get('pokemon-species', { params })
+      .then(response => {
+        species.value = response.results;
+        loadMore(false);
+      });
+}
 
-    &.sticky {
-      @apply bg-neutral-50 dark:bg-neutral-800 z-10;
-    }
+const batchSize = 100;
+const cannotLoadMore = computed(() => pokemonList.value?.length >= species.value?.length);
+function loadMore(loadAll = false) {
+  if (cannotLoadMore.value) {
+    return;
   }
 
-  .header-cell {
-    @apply border-b-2 border-slate-400/50 text-base sm:text-xl;
-
-    .sort-icon {
-      @apply text-base sm:text-lg opacity-0;
-    }
-
-    &:hover {
-      .sort-icon {
-        @apply opacity-60;
-      }
-    }
+  loading.value = true;
+  const requests = [];
+  const chunkSize = loadAll ? 10000 : batchSize;
+  for (let i = pokemonList.value.length; i < pokemonList.value.length + chunkSize && i < species.value.length; i++) {
+    const url = species.value[i].url;
+    const uri = url.substring(url.indexOf('pokemon-species'));
+    requests.push(PokemonApi.get(uri));
   }
 
-  .body-cell {
-    @apply border-b border-slate-400/50 text-sm sm:text-base;
+  Promise.all(requests)
+    .then(responses => {
+      responses.forEach(response => pokemonList.value.push({
+        id: response.id,
+        national: {
+          national: getNumberForPokedex(response, 'national'),
+        },
+        name: getValueForLanguage(response, 'en', 'name'),
+        ...regions.value.reduce((regionMap, region) => ({
+          ...regionMap,
+          [region.key]: region.pokedexes.reduce((regionalPokedexMap, regionalPokedex) => ({
+            ...regionalPokedexMap,
+            [regionalPokedex]: getNumberForPokedex(response, regionalPokedex),
+          }), {}),
+        }), {}),
+      }));
+    })
+    .finally(() => {
+      loading.value = false;
+    });
+}
+
+function getNumberForPokedex(pokemonObj, pokedex) {
+    return pokemonObj.pokedex_numbers.find(entry => entry.pokedex.name === pokedex)?.entry_number || null;
+}
+
+function getValueForLanguage(obj, language, key) {
+  const groupKey = `${key}s`;
+  const nameEntry = obj[groupKey].find(entry => entry.language.name === language);
+  return nameEntry ? nameEntry[key] : null;
+}
+
+const completionData = ref(JSON.parse(window.localStorage.getItem('mcudzi2:pokedex-tracker:completion') || '{}'));
+function toggleEntry(region, pokedex, number) {
+  if (completionData.value[region] === undefined) {
+    completionData.value[region] = {};
+  }
+  if (completionData.value[region][pokedex] === undefined) {
+    completionData.value[region][pokedex] = {};
+  }
+  const currentValue = !!completionData.value[region][pokedex][number];
+  completionData.value[region][pokedex][number] = !currentValue;
+  saveCompletion();
+}
+
+function saveCompletion() {
+  window.localStorage.setItem('mcudzi2:pokedex-tracker:completion', JSON.stringify(completionData.value));
+}
+
+function clearCompletion() {
+  if (confirm("Clearing Pokedex Completion - this will overwrite your saved data. This CANNOT be undone. Are you sure?")) {
+    completionData.value = {};
+    window.localStorage.removeItem('mcudzi2:pokedex-tracker:completion');
   }
 }
-</style>
+
+onMounted(() => {
+  const noLimitParams = {
+    limit: 10000,
+    offset: 0,
+  };
+  initRegions(noLimitParams).finally(() => {
+    initPokemon(noLimitParams);
+  });
+  initPokedexMetadata(noLimitParams);
+});
+</script>
