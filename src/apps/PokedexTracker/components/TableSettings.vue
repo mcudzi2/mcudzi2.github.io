@@ -29,7 +29,7 @@
             />
             <label
               :for="pokedexKey"
-              v-text="pokedexes[pokedexKey]"
+              v-text="pokedexes[pokedexKey]?.name"
             />
           </div>
         </div>

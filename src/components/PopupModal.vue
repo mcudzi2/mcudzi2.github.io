@@ -60,7 +60,7 @@ export default {
 import SvgIcon from "@/components/SvgIcon.vue";
 import ActionButton from "@/components/ActionButton.vue";
 
-defineProps({
+const props = defineProps({
   open: {
     type: Boolean,
     default: false,
@@ -74,6 +74,14 @@ defineProps({
     default: 'OK',
   },
   closeOnBackdropClick: {
+    type: Boolean,
+    default: true,
+  },
+  closeOnCancel: {
+    type: Boolean,
+    default: true,
+  },
+  closeOnConfirm: {
     type: Boolean,
     default: true,
   },
@@ -102,11 +110,15 @@ function close() {
 
 function cancel() {
   emit('cancel');
-  emit('close');
+  if (props.closeOnCancel) {
+    emit('close');
+  }
 }
 
 function confirm() {
   emit('confirm');
-  emit('close');
+  if (props.closeOnConfirm) {
+    emit('close');
+  }
 }
 </script>
