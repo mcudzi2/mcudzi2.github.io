@@ -241,7 +241,7 @@ function initPokemon(params = {}) {
 const batchSize = 100;
 const cannotLoadMore = computed(() => pokemonList.value?.length >= species.value?.length);
 function loadMore(loadAll = false) {
-  if (cannotLoadMore.value) {
+  if (cannotLoadMore.value || loading.value) {
     return;
   }
 
