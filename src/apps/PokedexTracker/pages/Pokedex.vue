@@ -17,6 +17,7 @@
         v-model:sort-by="sortBy"
         :headers="columns"
         :items="pokemonList"
+        :row-classes="tableRowClasses"
         fix-headers
         :search-term="searchBy"
         search-fields="name"
@@ -83,6 +84,7 @@
       :settings="tableSettings"
       :completion-data="completionData"
       :pokedexes="pokedexes"
+      :completed-pokemon="completedPokemon"
     />
   </div>
 </template>
@@ -96,7 +98,6 @@ import TableSettings from "../components/TableSettings.vue";
 import ActionButton from "@/components/ActionButton.vue";
 import DataTable from "@/components/DataTable.vue";
 import CaptureSummary from "@/apps/PokedexTracker/components/CaptureSummary.vue";
-import ProgressBar from "@/components/ProgressBar.vue";
 
 const loading = ref(false);
 
@@ -125,23 +126,23 @@ const columns = computed(() => {
     {
       value: 'national',
       name: "#",
-      headerClasses: "justify-end sticky -left-5 sm:-left-3",
-      rowClasses: "items-end sticky -left-5 sm:-left-3",
+      headerContentClasses: "justify-end sticky -left-5 sm:-left-3",
+      rowContentClasses: "items-end sticky -left-5 sm:-left-3",
       pokedexes: ['national'],
       sortBy: 'national.national',
     },
     {
       value: 'name',
       name: "Name",
-      headerClasses: "sticky left-14 sm:left-16",
-      rowClasses: "font-medium sticky left-14 sm:left-16",
+      headerContentClasses: "sticky left-14 sm:left-16",
+      rowContentClasses: "font-medium sticky left-14 sm:left-16",
     },
   ];
   const regionColumns = regions.value?.map(region => ({
     value: region.key,
     name: region.name,
-    headerClasses: "justify-center",
-    rowClasses: "items-center",
+    headerContentClasses: "justify-center",
+    rowContentClasses: "items-center",
     pokedexes: region.pokedexes,
     sortBy: region.pokedexes
       .filter(pokedex => !!tableSettings.value?.pokedexes?.[pokedex])
@@ -273,6 +274,7 @@ function loadMore(loadAll = false) {
     })
     .finally(() => {
       loading.value = false;
+      isPokemonCaughtInAllPokedexes(pokemonList.value[0]);
     });
 }
 
@@ -311,6 +313,21 @@ function clearCompletion() {
 }
 
 const showCaptureSummary = ref(false);
+function isPokemonCaughtInAllPokedexes(item) {
+  return !!completionData.value.national?.national?.[item.national.national]
+    && regions.value.every(region => {
+      return region.pokedexes.every(pokedexKey => {
+        const regionalPokedexNumber = item?.[region.key]?.[pokedexKey] || 0;
+        return !tableSettings.value.pokedexes?.[pokedexKey]
+          || !regionalPokedexNumber
+          || !!completionData.value?.[region.key]?.[pokedexKey]?.[regionalPokedexNumber];
+      })
+    });
+}
+function tableRowClasses(item) {
+  return { 'bg-amber-500/10': isPokemonCaughtInAllPokedexes(item) };
+}
+const completedPokemon = computed(() => pokemonList.value.filter(pokemon => isPokemonCaughtInAllPokedexes(pokemon)));
 
 onMounted(() => {
   const noLimitParams = {
