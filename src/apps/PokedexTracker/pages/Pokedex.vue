@@ -37,7 +37,7 @@
               :class="{ 'cursor-pointer': number }"
               @click="number && toggleEntry(pokedexColumn.value, pokedex, number)"
             >
-              <span v-tippy="number ? pokedexes[pokedex] : null">
+              <span v-tippy="number ? pokedexes[pokedex]?.name : null">
                 {{ number || '-' }}
               </span>
               <div
@@ -58,11 +58,16 @@
       >
         Load {{ batchSize }} More
       </ActionButton>
+    </div>
+    <div class="flex flex-row items-center justify-center gap-x-6">
       <ActionButton
-          v-if="!cannotLoadMore"
+          type="secondary"
+          text="View Capture Summary"
+          @click="showCaptureSummary = true"
+      />
+      <ActionButton
           type="secondary"
           text="Clear Capture Data"
-          size="lg"
           @click="clearCompletion"
       />
     </div>
@@ -73,17 +78,25 @@
       :pokedexes="pokedexes"
       @update="saveSettings"
     />
+    <CaptureSummary
+      v-model:show="showCaptureSummary"
+      :settings="tableSettings"
+      :completion-data="completionData"
+      :pokedexes="pokedexes"
+    />
   </div>
 </template>
 
 <script setup>
-import { ref, computed, onMounted, reactive, watch } from 'vue';
+import { ref, computed, onMounted, reactive } from 'vue';
 import PokemonApi from "@/services/apis/PokemonApi.js";
 import { toTitleCase } from "@/services/Utils.js";
 import InputSearch from "@/components/InputSearch.vue";
 import TableSettings from "../components/TableSettings.vue";
 import ActionButton from "@/components/ActionButton.vue";
 import DataTable from "@/components/DataTable.vue";
+import CaptureSummary from "@/apps/PokedexTracker/components/CaptureSummary.vue";
+import ProgressBar from "@/components/ProgressBar.vue";
 
 const loading = ref(false);
 
@@ -177,7 +190,6 @@ const sortBy = reactive({
 });
 
 const pokedexes = ref({});
-const pokedexesForDisplay = ref(tableSettings.value?.pokedexes || {});
 function initPokedexMetadata(params = {}) {
   PokemonApi.get('pokedex', { params })
     .then(response => {
@@ -195,11 +207,15 @@ function initPokedexMetadata(params = {}) {
             if (extendedDescIndex < 0) {
               extendedDescIndex = pokedexDesc?.indexOf('-');
             }
+            const name = (extendedDescIndex > 0 ? pokedexDesc.substring(0, extendedDescIndex) : pokedexDesc)
+                || (pokedexName ? `${pokedexName} dex` : '')
+                || toTitleCase(pokedex.name) + ' dex';
             return {
               ...pokedexMap,
-              [pokedex.name]: (extendedDescIndex > 0 ? pokedexDesc.substring(0, extendedDescIndex) : pokedexDesc)
-              || (pokedexName ? `${pokedexName} dex` : '')
-              || toTitleCase(pokedex.name) + ' dex',
+              [pokedex.name]: {
+                name,
+                count: pokedex.pokemon_entries?.length || 0,
+              },
             };
           }, {});
           Object.keys(pokedexes.value).forEach(pokedexName => {
@@ -293,6 +309,8 @@ function clearCompletion() {
     window.localStorage.removeItem('mcudzi2:pokedex-tracker:completion');
   }
 }
+
+const showCaptureSummary = ref(false);
 
 onMounted(() => {
   const noLimitParams = {
