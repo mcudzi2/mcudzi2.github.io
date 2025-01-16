@@ -1,14 +1,15 @@
 <template>
   <table class="w-full relative">
     <thead :class="{ 'fixed-headers': fixHeaders }">
-      <tr>
+      <tr :class="headerClasses">
         <th
           v-for="header in headers"
           :key="header.value"
+          :class="header.headerCellClasses || headerCellClasses(header)"
         >
           <div
             class="flex flex-row items-center gap-x-0.5 cursor-pointer"
-            :class="header.headerClasses"
+            :class="header.headerContentClasses || headerContentClasses(header)"
             @click="toggleSort(header.sortBy || header.value, header.value)"
           >
             <slot
@@ -31,14 +32,16 @@
       <tr
         v-for="item in sortedItemsToDisplay"
         :key="item[itemTrackBy]"
+        :class="item.rowClasses || rowClasses(item)"
       >
         <td
           v-for="header in headers"
           :key="`${item[itemTrackBy]}-${header.value}`"
+          :class="item.rowCellClasses || rowCellClasses(item, header)"
         >
           <div
             class="flex flex-col"
-            :class="header.rowClasses"
+            :class="header.rowContentClasses || rowContentClasses(item, header)"
           >
             <slot
               :name="`item-${header.value}`"
@@ -103,6 +106,30 @@ const props = defineProps({
   caseSensitiveSearch: {
     type: Boolean,
     default: false,
+  },
+  headerClasses: {
+    type: [String, Array, Object],
+    default: ''
+  },
+  headerCellClasses: {
+    type: Function,
+    default: () => (() => {}),
+  },
+  headerContentClasses: {
+    type: Function,
+    default: () => (() => {}),
+  },
+  rowClasses: {
+    type: Function,
+    default: () => (() => {}),
+  },
+  rowCellClasses: {
+    type: Function,
+    default: () => (() => {}),
+  },
+  rowContentClasses: {
+    type: Function,
+    default: () => (() => {}),
   },
 });
 
