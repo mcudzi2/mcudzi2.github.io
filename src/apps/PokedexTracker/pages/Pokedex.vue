@@ -12,44 +12,46 @@
         @click="showTableSettings = true"
       />
     </div>
-    <div class="w-full max-h-[75vh] overflow-auto">
-      <DataTable
-        v-model:sort-by="sortBy"
-        :headers="columns"
-        :items="pokemonList"
-        :row-classes="tableRowClasses"
-        fix-headers
-        :search-term="searchBy"
-        search-fields="name"
-        :style="tableStyles"
+    <DataTable
+      v-model:sort-by="sortBy"
+      :headers="columns"
+      :items="pokemonList"
+      :row-classes="tableRowClasses"
+      fix-headers
+      :search-term="searchBy"
+      search-fields="name"
+      :table-style="tableStyles"
+      use-virtual-scroll
+      :row-height="rowHeight"
+      :padding-item-count="10"
+      class="w-full h-[75vh] overflow-auto"
+    >
+      <template
+        v-for="pokedexColumn in pokedexColumns"
+        :key="pokedexColumn.value"
+        #[`item-${pokedexColumn.value}`]="item"
       >
         <template
-          v-for="pokedexColumn in pokedexColumns"
-          :key="pokedexColumn.value"
-          #[`item-${pokedexColumn.value}`]="item"
+          v-for="(number, pokedex) in item[pokedexColumn.value]"
+          :key="`row-${item.id}-${pokedex}`"
         >
-          <template
-            v-for="(number, pokedex) in item[pokedexColumn.value]"
-            :key="`row-${item.id}-${pokedex}`"
+          <div
+            v-if="tableSettings.pokedexes[pokedex] || pokedex === 'national'"
+            class="flex flex-row items-center gap-x-1 sm:gap-x-1.5"
+            :class="{ 'cursor-pointer': number }"
+            @click="number && toggleEntry(pokedexColumn.value, pokedex, number)"
           >
+            <span v-tippy="number ? pokedexes[pokedex]?.name : null">
+              {{ number || '-' }}
+            </span>
             <div
-              v-if="tableSettings.pokedexes[pokedex] || pokedex === 'national'"
-              class="flex flex-row items-center gap-x-1 sm:gap-x-1.5"
-              :class="{ 'cursor-pointer': number }"
-              @click="number && toggleEntry(pokedexColumn.value, pokedex, number)"
-            >
-              <span v-tippy="number ? pokedexes[pokedex]?.name : null">
-                {{ number || '-' }}
-              </span>
-              <div
-                class="h-4 w-4 rounded-full bg-transparent border border-transparent"
-                :class="{ 'drop-shadow !border-neutral-300 dark:border-neutral-700 bg-gradient-to-b from-red-700 from-50% to-white to-50%': completionData[pokedexColumn.value]?.[pokedex]?.[number] }"
-              />
-            </div>
-          </template>
+              class="h-4 w-4 rounded-full bg-transparent border border-transparent"
+              :class="{ 'drop-shadow !border-neutral-300 dark:border-neutral-700 bg-gradient-to-b from-red-700 from-50% to-white to-50%': completionData[pokedexColumn.value]?.[pokedex]?.[number] }"
+            />
+          </div>
         </template>
-      </DataTable>
-    </div>
+      </template>
+    </DataTable>
     <div class="flex flex-row items-center justify-center gap-x-6">
       <ActionButton
           v-if="!cannotLoadMore"
@@ -327,6 +329,14 @@ function isPokemonCaughtInAllPokedexes(item) {
 function tableRowClasses(item) {
   return { 'bg-amber-500/10': isPokemonCaughtInAllPokedexes(item) };
 }
+const rowHeight = computed(() => {
+  const maxPokedexPerRegionCount = pokedexColumns.value.reduce((maxCount, column) => {
+    const pokedexesInColumn = column.pokedexes.filter(pokedex => !!tableSettings?.value?.pokedexes?.[pokedex]);
+    return Math.max(maxCount, pokedexesInColumn.length);
+  }, 0);
+  return 49 + (24 * Math.max(1, maxPokedexPerRegionCount));
+})
+
 const completedPokemon = computed(() => pokemonList.value.filter(pokemon => isPokemonCaughtInAllPokedexes(pokemon)));
 
 onMounted(() => {
