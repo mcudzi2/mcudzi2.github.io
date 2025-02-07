@@ -8,6 +8,14 @@
       <div class="space-y-6">
         <h4>Pokedex Completion</h4>
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-y-6 lg:gap-x-10 md:min-w-[40rem] lg:min-w-[56rem]">
+          <div class="col-span-full space-y-1">
+            <h6>Total Dex Completion</h6>
+            <ProgressBar
+              :count="completedPokemon.length"
+              :total="totalCount"
+              percentage-decimal-places="2"
+            />
+          </div>
           <template
             v-for="pokedex in progressData"
             :key="`${pokedex.name}-completion`"
@@ -96,6 +104,8 @@ const progressData = computed(() => {
     };
   }).filter(val => val !== null);
 });
+
+const totalCount = computed(() => Object.values(progressData.value).reduce((total, pokedex) => total + pokedex.count, 0));
 
 function close() {
   showCaptureSummary.value = false;
