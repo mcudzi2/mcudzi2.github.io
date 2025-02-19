@@ -105,7 +105,7 @@ const progressData = computed(() => {
   }).filter(val => val !== null);
 });
 
-const totalCount = computed(() => Object.values(progressData.value).reduce((total, pokedex) => total + pokedex.count, 0));
+const totalCount = computed(() => props.pokedexes.national.count);
 
 function close() {
   showCaptureSummary.value = false;
