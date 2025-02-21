@@ -11,7 +11,7 @@
           <div class="col-span-full space-y-1">
             <h6>Total Dex Completion</h6>
             <ProgressBar
-              :count="completedPokemon.length"
+              :count="totalProgress"
               :total="totalCount"
               percentage-decimal-places="2"
             />
@@ -105,7 +105,8 @@ const progressData = computed(() => {
   }).filter(val => val !== null);
 });
 
-const totalCount = computed(() => props.pokedexes.national.count);
+const totalProgress = computed(() => Object.keys(progressData.value).reduce((total, pokedex) => total + progressData.value[pokedex].progress, 0));
+const totalCount = computed(() => Object.keys(progressData.value).reduce((total, pokedex) => total + progressData.value[pokedex].count, 0));
 
 function close() {
   showCaptureSummary.value = false;
