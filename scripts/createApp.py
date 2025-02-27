@@ -210,7 +210,8 @@ print("  3) Set up app base route at " + appRoute)
 print("  4) Set up base route in routes and create route homepage component at " + appHomeComponentPath)
 print("  5) Register app " + appName + " and routes with base app and router" + Style.RESET_ALL)
 if promptInput("Continue with the above actions?", False, "bool"):
-    print("Setting up " + appName + "...")
+    print('')
+    print(Fore.YELLOW + "Setting up " + appName + "..." + Style.RESET_ALL)
     config = {
         'name': appName,
         'dirName': appDirName,
@@ -222,6 +223,6 @@ if promptInput("Continue with the above actions?", False, "bool"):
         'route': appRoute
     }
     setUpApp(appName, config)
-    print("Setup complete.")
+    print(Fore.GREEN + "Setup complete." + Style.RESET_ALL)
 else:
-    print("Aborting operation...")
+    print(Fore.RED + "Aborting operation..." + Style.RESET_ALL)
