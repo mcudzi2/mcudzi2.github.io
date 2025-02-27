@@ -14,6 +14,7 @@ export function configureRouter() {
         ],
     };
 
+    // @appRegistration - comment used by script - DO NOT REMOVE
     AppManager.registerAppRoutes(routerConfig, 'Pokedex Tracker');
 
     return createRouter(routerConfig);
