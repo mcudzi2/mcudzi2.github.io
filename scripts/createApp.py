@@ -136,7 +136,7 @@ def setUpApp(appName, appConfig):
         while "AppManager.registerApp" in lines[lineNum]:
             file.write(lines[lineNum])
             lineNum += 1
-        file.write(f"    AppManager.registerApp({importAs});" + '\n')
+        file.write(f"AppManager.registerApp({importAs});" + '\n')
 
         while lineNum < len(lines):
             file.write(lines[lineNum])
@@ -165,7 +165,7 @@ def setUpApp(appName, appConfig):
         while "AppManager.registerAppRoutes" in lines[lineNum]:
             file.write(lines[lineNum])
             lineNum += 1
-        file.write(f"AppManager.registerAppRoutes(routerConfig, '{appName}');" + '\n')
+        file.write(f"    AppManager.registerAppRoutes(routerConfig, '{appName}');" + '\n')
 
         while lineNum < len(lines):
             file.write(lines[lineNum])
